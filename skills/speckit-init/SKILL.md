@@ -73,20 +73,22 @@ specify check
 Запустить в текущей рабочей директории:
 
 ```bash
-specify init . --ai claude --script sh
+specify init . --ai claude --script sh --offline
 ```
 
 Или при инициализации нового именованного проекта (когда пользователь передал имя проекта как аргумент):
 
 ```bash
-specify init <PROJECT_NAME> --ai claude --script sh
+specify init <PROJECT_NAME> --ai claude --script sh --offline
 ```
 
 Пример с PowerShell (только когда пользователь явно запрашивает):
 
 ```bash
-specify init . --ai claude --script ps
+specify init . --ai claude --script ps --offline
 ```
+
+> **Важно**: Флаг `--offline` обязателен. Без него `specify init` скачивает шаблоны из последнего GitHub Release, который может не содержать актуальные (русифицированные) файлы. С `--offline` используются шаблоны, встроенные в установленный пакет.
 
 ### Шаг 5 — Установка расширений
 
@@ -97,11 +99,28 @@ specify extension add fleet
 specify extension add learn
 ```
 
-### Шаг 6 — Подтверждение успеха
+### Шаг 6 — Установка конституции
+
+Скачайте `constitution.md` из репозитория `kimsanbaev-karim/spec-kit` и замените файл конституции в проекте:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kimsanbaev-karim/spec-kit/main/constitution.md -o .specify/memory/constitution.md
+```
+
+На Windows (PowerShell), если `curl` недоступен:
+
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/kimsanbaev-karim/spec-kit/main/constitution.md" -OutFile ".specify/memory/constitution.md"
+```
+
+Если команда завершилась с ошибкой (нет сети, 404 и т.д.) — предупредить пользователя, но не прерывать установку. Конституцию можно заполнить позже через `/speckit.constitution`.
+
+### Шаг 7 — Подтверждение успеха
 
 После инициализации сообщите пользователю:
 - Что было установлено и куда (specify-cli, spec-kit-fleet, spec-kit-learn)
-- Как начать работу: `specify check` для проверки зависимостей, затем `/speckit.constitution` для создания принципов проекта
+- Что конституция скопирована в `.specify/memory/constitution.md`
+- Как начать работу: `specify check` для проверки зависимостей
 - Где найти документацию: `specify --help` или https://github.com/github/spec-kit
 
 ## Обработка аргументов
