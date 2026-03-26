@@ -48,7 +48,7 @@ The fastest way to get started is to let your AI agent install spec-kit for you.
 **Paste this prompt into Claude Code (or any compatible AI agent):**
 
 ```
-Download the file at https://raw.githubusercontent.com/github/spec-kit/main/skills/speckit-init/SKILL.md and save it to ~/.claude/skills/speckit-init/SKILL.md, then run /speckit-init
+Download the file at https://raw.githubusercontent.com/kimsanbaev-karim/spec-kit/main/skills/speckit-init/SKILL.md and save it to ~/.claude/skills/speckit-init/SKILL.md, then run /speckit-init
 ```
 
 That's it. The agent will:

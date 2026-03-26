@@ -93,8 +93,8 @@ specify init . --ai claude --script ps
 После инициализации установите расширения spec-kit:
 
 ```bash
-specify extensions spec-kit-fleet
-specify extensions spec-kit-learn
+specify extension add fleet
+specify extension add learn
 ```
 
 ### Шаг 6 — Подтверждение успеха
