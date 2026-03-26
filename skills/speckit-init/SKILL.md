@@ -88,10 +88,19 @@ specify init <PROJECT_NAME> --ai claude --script sh
 specify init . --ai claude --script ps
 ```
 
-### Шаг 5 — Подтверждение успеха
+### Шаг 5 — Установка расширений
+
+После инициализации установите расширения spec-kit:
+
+```bash
+specify extensions spec-kit-fleet
+specify extensions spec-kit-learn
+```
+
+### Шаг 6 — Подтверждение успеха
 
 После инициализации сообщите пользователю:
-- Что было установлено и куда
+- Что было установлено и куда (specify-cli, spec-kit-fleet, spec-kit-learn)
 - Как начать работу: `specify check` для проверки зависимостей, затем `/speckit.constitution` для создания принципов проекта
 - Где найти документацию: `specify --help` или https://github.com/github/spec-kit
 
