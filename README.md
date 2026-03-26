@@ -19,6 +19,7 @@
 
 ## Table of Contents
 
+- [🚀 Quick Start](#-quick-start)
 - [🤔 What is Spec-Driven Development?](#-what-is-spec-driven-development)
 - [⚡ Get Started](#-get-started)
 - [📽️ Video Overview](#️-video-overview)
@@ -39,6 +40,25 @@
 - [💬 Support](#-support)
 - [🙏 Acknowledgements](#-acknowledgements)
 - [📄 License](#-license)
+
+## 🚀 Quick Start
+
+The fastest way to get started is to let your AI agent install spec-kit for you.
+
+**Paste this prompt into Claude Code (or any compatible AI agent):**
+
+```
+Download the file at https://raw.githubusercontent.com/github/spec-kit/main/skills/speckit-init/SKILL.md and save it to ~/.claude/skills/speckit-init/SKILL.md, then run /speckit-init
+```
+
+That's it. The agent will:
+1. Download the `speckit-init` skill
+2. Install `specify-cli` via `uv`
+3. Run `specify init` in your project
+
+The `/speckit-init` command stays available in Claude Code for future use — no restart needed.
+
+---
 
 ## 🤔 What is Spec-Driven Development?
 
