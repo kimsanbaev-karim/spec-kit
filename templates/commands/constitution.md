@@ -1,84 +1,84 @@
 ---
-description: Create or update the project constitution from interactive or provided principle inputs, ensuring all dependent templates stay in sync.
-handoffs: 
-  - label: Build Specification
+description: Создать или обновить конституцию проекта на основе интерактивного или предоставленного ввода принципов, обеспечив синхронизацию всех зависимых шаблонов.
+handoffs:
+  - label: Создать спецификацию
     agent: speckit.specify
-    prompt: Implement the feature specification based on the updated constitution. I want to build...
+    prompt: Реализуй спецификацию фичи на основе обновлённой конституции. Я хочу создать...
 ---
 
-## User Input
+## Ввод пользователя
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Вы **ОБЯЗАНЫ** учесть ввод пользователя перед продолжением (если он не пустой).
 
-## Outline
+## Краткое содержание
 
-You are updating the project constitution at `.specify/memory/constitution.md`. This file is a TEMPLATE containing placeholder tokens in square brackets (e.g. `[PROJECT_NAME]`, `[PRINCIPLE_1_NAME]`). Your job is to (a) collect/derive concrete values, (b) fill the template precisely, and (c) propagate any amendments across dependent artifacts.
+Вы обновляете конституцию проекта в `.specify/memory/constitution.md`. Этот файл является ШАБЛОНОМ, содержащим токены-заглушки в квадратных скобках (например, `[PROJECT_NAME]`, `[PRINCIPLE_1_NAME]`). Ваша задача — (а) собрать/вывести конкретные значения, (б) точно заполнить шаблон и (в) распространить все поправки на зависимые артефакты.
 
-**Note**: If `.specify/memory/constitution.md` does not exist yet, it should have been initialized from `.specify/templates/constitution-template.md` during project setup. If it's missing, copy the template first.
+**Примечание**: Если `.specify/memory/constitution.md` ещё не существует, он должен был быть инициализирован из `.specify/templates/constitution-template.md` во время настройки проекта. Если файл отсутствует, сначала скопируйте шаблон.
 
-Follow this execution flow:
+Следуйте этому потоку выполнения:
 
-1. Load the existing constitution at `.specify/memory/constitution.md`.
-   - Identify every placeholder token of the form `[ALL_CAPS_IDENTIFIER]`.
-   **IMPORTANT**: The user might require less or more principles than the ones used in the template. If a number is specified, respect that - follow the general template. You will update the doc accordingly.
+1. Загрузить существующую конституцию в `.specify/memory/constitution.md`.
+   - Определить каждый токен-заглушку вида `[ALL_CAPS_IDENTIFIER]`.
+   **ВАЖНО**: Пользователю может потребоваться меньше или больше принципов, чем используется в шаблоне. Если указано количество — соблюдать его, следуя общему шаблону. Обновить документ соответственно.
 
-2. Collect/derive values for placeholders:
-   - If user input (conversation) supplies a value, use it.
-   - Otherwise infer from existing repo context (README, docs, prior constitution versions if embedded).
-   - For governance dates: `RATIFICATION_DATE` is the original adoption date (if unknown ask or mark TODO), `LAST_AMENDED_DATE` is today if changes are made, otherwise keep previous.
-   - `CONSTITUTION_VERSION` must increment according to semantic versioning rules:
-     - MAJOR: Backward incompatible governance/principle removals or redefinitions.
-     - MINOR: New principle/section added or materially expanded guidance.
-     - PATCH: Clarifications, wording, typo fixes, non-semantic refinements.
-   - If version bump type ambiguous, propose reasoning before finalizing.
+2. Собрать/вывести значения для заглушек:
+   - Если ввод пользователя (разговор) предоставляет значение — использовать его.
+   - Иначе вывести из существующего контекста репозитория (README, документы, предыдущие версии конституции, если встроены).
+   - Для дат управления: `RATIFICATION_DATE` — исходная дата принятия (если неизвестна — спросить или пометить TODO), `LAST_AMENDED_DATE` — сегодня, если вносятся изменения, иначе сохранить предыдущую.
+   - `CONSTITUTION_VERSION` должна инкрементироваться по правилам семантического версионирования:
+     - MAJOR: Обратно несовместимые удаления или переопределения принципов/управления.
+     - MINOR: Добавлен новый принцип/раздел или существенно расширено руководство.
+     - PATCH: Уточнения, формулировки, исправления опечаток, несемантические улучшения.
+   - Если тип повышения версии неоднозначен — предложить обоснование перед финализацией.
 
-3. Draft the updated constitution content:
-   - Replace every placeholder with concrete text (no bracketed tokens left except intentionally retained template slots that the project has chosen not to define yet—explicitly justify any left).
-   - Preserve heading hierarchy and comments can be removed once replaced unless they still add clarifying guidance.
-   - Ensure each Principle section: succinct name line, paragraph (or bullet list) capturing non‑negotiable rules, explicit rationale if not obvious.
-   - Ensure Governance section lists amendment procedure, versioning policy, and compliance review expectations.
+3. Составить обновлённое содержимое конституции:
+   - Заменить каждую заглушку конкретным текстом (никаких оставшихся токенов в скобках, кроме намеренно сохранённых слотов шаблона, которые проект решил не определять — явно обосновать любые оставшиеся).
+   - Сохранить иерархию заголовков и комментарии можно удалить после замены, если они больше не добавляют поясняющего руководства.
+   - Убедиться, что каждая секция принципа содержит: краткое название, абзац (или список пуль) с обязательными правилами, явное обоснование, если оно не очевидно.
+   - Убедиться, что секция Управления перечисляет процедуру внесения поправок, политику версионирования и ожидания проверки соответствия.
 
-4. Consistency propagation checklist (convert prior checklist into active validations):
-   - Read `.specify/templates/plan-template.md` and ensure any "Constitution Check" or rules align with updated principles.
-   - Read `.specify/templates/spec-template.md` for scope/requirements alignment—update if constitution adds/removes mandatory sections or constraints.
-   - Read `.specify/templates/tasks-template.md` and ensure task categorization reflects new or removed principle-driven task types (e.g., observability, versioning, testing discipline).
-   - Read each command file in `.specify/templates/commands/*.md` (including this one) to verify no outdated references (agent-specific names like CLAUDE only) remain when generic guidance is required.
-   - Read any runtime guidance docs (e.g., `README.md`, `docs/quickstart.md`, or agent-specific guidance files if present). Update references to principles changed.
+4. Контрольный список распространения согласованности (преобразовать предыдущий контрольный список в активные валидации):
+   - Прочитать `.specify/templates/plan-template.md` и убедиться, что любой раздел «Проверка конституции» или правила согласованы с обновлёнными принципами.
+   - Прочитать `.specify/templates/spec-template.md` для согласования охвата/требований — обновить, если конституция добавляет/удаляет обязательные секции или ограничения.
+   - Прочитать `.specify/templates/tasks-template.md` и убедиться, что категоризация задач отражает новые или удалённые типы задач, обусловленные принципами (например, наблюдаемость, версионирование, дисциплина тестирования).
+   - Прочитать каждый командный файл в `.specify/templates/commands/*.md` (включая этот), чтобы убедиться, что устаревших ссылок (агент-специфичных имён вроде CLAUDE) нет там, где требуется общее руководство.
+   - Прочитать любые документы рабочего руководства (например, `README.md`, `docs/quickstart.md`, или агент-специфичные файлы руководства при наличии). Обновить ссылки на изменённые принципы.
 
-5. Produce a Sync Impact Report (prepend as an HTML comment at top of the constitution file after update):
-   - Version change: old → new
-   - List of modified principles (old title → new title if renamed)
-   - Added sections
-   - Removed sections
-   - Templates requiring updates (✅ updated / ⚠ pending) with file paths
-   - Follow-up TODOs if any placeholders intentionally deferred.
+5. Создать Отчёт о синхронизации (добавить как HTML-комментарий в начало файла конституции после обновления):
+   - Изменение версии: старая → новая
+   - Список изменённых принципов (старое название → новое название при переименовании)
+   - Добавленные секции
+   - Удалённые секции
+   - Шаблоны, требующие обновления (✅ обновлено / ⚠ ожидает) с путями к файлам
+   - Последующие TODO, если какие-либо заглушки намеренно отложены.
 
-6. Validation before final output:
-   - No remaining unexplained bracket tokens.
-   - Version line matches report.
-   - Dates ISO format YYYY-MM-DD.
-   - Principles are declarative, testable, and free of vague language ("should" → replace with MUST/SHOULD rationale where appropriate).
+6. Валидация перед финальным выводом:
+   - Нет оставшихся необъяснённых токенов в скобках.
+   - Строка версии соответствует отчёту.
+   - Даты в формате ISO YYYY-MM-DD.
+   - Принципы декларативны, проверяемы и не содержат расплывчатых формулировок («should» → заменить на MUST/SHOULD с обоснованием там, где уместно).
 
-7. Write the completed constitution back to `.specify/memory/constitution.md` (overwrite).
+7. Записать завершённую конституцию обратно в `.specify/memory/constitution.md` (перезапись).
 
-8. Output a final summary to the user with:
-   - New version and bump rationale.
-   - Any files flagged for manual follow-up.
-   - Suggested commit message (e.g., `docs: amend constitution to vX.Y.Z (principle additions + governance update)`).
+8. Вывести финальное резюме пользователю с:
+   - Новой версией и обоснованием повышения.
+   - Любыми файлами, требующими ручных действий.
+   - Предложенным сообщением коммита (например, `docs: amend constitution to vX.Y.Z (principle additions + governance update)`).
 
-Formatting & Style Requirements:
+Требования к форматированию и стилю:
 
-- Use Markdown headings exactly as in the template (do not demote/promote levels).
-- Wrap long rationale lines to keep readability (<100 chars ideally) but do not hard enforce with awkward breaks.
-- Keep a single blank line between sections.
-- Avoid trailing whitespace.
+- Использовать заголовки Markdown точно как в шаблоне (не понижать/повышать уровни).
+- Переносить длинные строки обоснования для сохранения читаемости (<100 символов в идеале), но не применять жёсткий перенос с неловкими разбивками.
+- Сохранять одну пустую строку между секциями.
+- Избегать пробелов в конце строк.
 
-If the user supplies partial updates (e.g., only one principle revision), still perform validation and version decision steps.
+Если пользователь предоставляет частичные обновления (например, только одна ревизия принципа) — всё равно выполнять шаги валидации и принятия решения о версии.
 
-If critical info missing (e.g., ratification date truly unknown), insert `TODO(<FIELD_NAME>): explanation` and include in the Sync Impact Report under deferred items.
+Если критически важная информация отсутствует (например, дата принятия действительно неизвестна), вставить `TODO(<FIELD_NAME>): объяснение` и включить в Отчёт о синхронизации в раздел отложенных элементов.
 
-Do not create a new template; always operate on the existing `.specify/memory/constitution.md` file.
+Не создавать новый шаблон; всегда работать с существующим файлом `.specify/memory/constitution.md`.

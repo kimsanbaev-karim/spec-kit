@@ -1,13 +1,13 @@
 ---
-description: Execute the implementation planning workflow using the plan template to generate design artifacts.
-handoffs: 
-  - label: Create Tasks
+description: Выполнить рабочий процесс планирования реализации с помощью шаблона плана для генерации проектных артефактов.
+handoffs:
+  - label: Создать задачи
     agent: speckit.tasks
-    prompt: Break the plan into tasks
+    prompt: Разбей план на задачи
     send: true
-  - label: Create Checklist
+  - label: Создать чеклист
     agent: speckit.checklist
-    prompt: Create a checklist for the following domain...
+    prompt: Создай чеклист для следующего домена...
 scripts:
   sh: scripts/bash/setup-plan.sh --json
   ps: scripts/powershell/setup-plan.ps1 -Json
@@ -16,144 +16,144 @@ agent_scripts:
   ps: scripts/powershell/update-agent-context.ps1 -AgentType __AGENT__
 ---
 
-## User Input
+## Ввод пользователя
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Вы **ОБЯЗАНЫ** учесть ввод пользователя перед продолжением (если он не пустой).
 
-## Pre-Execution Checks
+## Предварительные проверки
 
-**Check for extension hooks (before planning)**:
-- Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_plan` key
-- If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+**Проверка хуков расширений (перед планированием)**:
+- Проверить, существует ли `.specify/extensions.yml` в корне проекта.
+- Если существует, прочитать и найти записи в ключе `hooks.before_plan`
+- Если YAML не удаётся разобрать или он невалиден, пропустить проверку хуков и продолжать нормально
+- Отфильтровать хуки, у которых `enabled` явно равно `false`. Считать хуки без поля `enabled` включёнными по умолчанию.
+- Для каждого оставшегося хука **не пытаться** интерпретировать или оценивать выражения `condition` хука:
+  - Если у хука нет поля `condition`, или оно null/пустое, считать хук выполняемым
+  - Если хук определяет непустое `condition`, пропустить хук и оставить оценку условия реализации HookExecutor
+- Для каждого выполняемого хука вывести следующее в зависимости от флага `optional`:
+  - **Опциональный хук** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Хуки расширений
 
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Опциональный предварительный хук**: {extension}
+    Команда: `/{command}`
+    Описание: {description}
 
-    Prompt: {prompt}
-    To execute: `/{command}`
+    Запрос: {prompt}
+    Для выполнения: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Обязательный хук** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Хуки расширений
 
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
+    **Автоматический предварительный хук**: {extension}
+    Выполняется: `/{command}`
     EXECUTE_COMMAND: {command}
 
-    Wait for the result of the hook command before proceeding to the Outline.
+    Дождаться результата команды хука перед переходом к Краткому содержанию.
     ```
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+- Если хуки не зарегистрированы или `.specify/extensions.yml` не существует, пропустить без вывода
 
-## Outline
+## Краткое содержание
 
-1. **Setup**: Run `{SCRIPT}` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. **Настройка**: Запустить `{SCRIPT}` из корня репозитория и разобрать JSON для FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. Для одинарных кавычек в аргументах, например "I'm Groot", использовать синтаксис экранирования: 'I'\''m Groot' (или двойные кавычки, если возможно: "I'm Groot").
 
-2. **Load context**: Read FEATURE_SPEC and `/memory/constitution.md`. Load IMPL_PLAN template (already copied).
+2. **Загрузить контекст**: Прочитать FEATURE_SPEC и `/memory/constitution.md`. Загрузить шаблон IMPL_PLAN (уже скопирован).
 
-3. **Execute plan workflow**: Follow the structure in IMPL_PLAN template to:
-   - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")
-   - Fill Constitution Check section from constitution
-   - Evaluate gates (ERROR if violations unjustified)
-   - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
-   - Phase 1: Generate data-model.md, contracts/, quickstart.md
-   - Phase 1: Update agent context by running the agent script
-   - Re-evaluate Constitution Check post-design
+3. **Выполнить рабочий процесс плана**: Следовать структуре в шаблоне IMPL_PLAN:
+   - Заполнить Технический контекст (отмечать неизвестные как "ТРЕБУЕТ УТОЧНЕНИЯ")
+   - Заполнить секцию Проверки конституции из конституции
+   - Оценить шлюзы (ОШИБКА при необоснованных нарушениях)
+   - Фаза 0: Сгенерировать research.md (разрешить все ТРЕБУЕТ УТОЧНЕНИЯ)
+   - Фаза 1: Сгенерировать data-model.md, contracts/, quickstart.md
+   - Фаза 1: Обновить контекст агента, запустив скрипт агента
+   - Повторная оценка Проверки конституции после проектирования
 
-4. **Stop and report**: Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generated artifacts.
+4. **Остановиться и сообщить**: Команда завершается после планирования Фазы 2. Сообщить ветку, путь IMPL_PLAN и созданные артефакты.
 
-5. **Check for extension hooks**: After reporting, check if `.specify/extensions.yml` exists in the project root.
-   - If it exists, read it and look for entries under the `hooks.after_plan` key
-   - If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
-   - Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-   - For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-     - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-     - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-   - For each executable hook, output the following based on its `optional` flag:
-     - **Optional hook** (`optional: true`):
+5. **Проверка хуков расширений**: После сообщения проверить, существует ли `.specify/extensions.yml` в корне проекта.
+   - Если существует, прочитать и найти записи в ключе `hooks.after_plan`
+   - Если YAML не удаётся разобрать или он невалиден, пропустить проверку хуков и продолжать нормально
+   - Отфильтровать хуки, у которых `enabled` явно равно `false`. Считать хуки без поля `enabled` включёнными по умолчанию.
+   - Для каждого оставшегося хука **не пытаться** интерпретировать или оценивать выражения `condition` хука:
+     - Если у хука нет поля `condition`, или оно null/пустое, считать хук выполняемым
+     - Если хук определяет непустое `condition`, пропустить хук и оставить оценку условия реализации HookExecutor
+   - Для каждого выполняемого хука вывести следующее в зависимости от флага `optional`:
+     - **Опциональный хук** (`optional: true`):
        ```
-       ## Extension Hooks
+       ## Хуки расширений
 
-       **Optional Hook**: {extension}
-       Command: `/{command}`
-       Description: {description}
+       **Опциональный хук**: {extension}
+       Команда: `/{command}`
+       Описание: {description}
 
-       Prompt: {prompt}
-       To execute: `/{command}`
+       Запрос: {prompt}
+       Для выполнения: `/{command}`
        ```
-     - **Mandatory hook** (`optional: false`):
+     - **Обязательный хук** (`optional: false`):
        ```
-       ## Extension Hooks
+       ## Хуки расширений
 
-       **Automatic Hook**: {extension}
-       Executing: `/{command}`
+       **Автоматический хук**: {extension}
+       Выполняется: `/{command}`
        EXECUTE_COMMAND: {command}
        ```
-   - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+   - Если хуки не зарегистрированы или `.specify/extensions.yml` не существует, пропустить без вывода
 
-## Phases
+## Фазы
 
-### Phase 0: Outline & Research
+### Фаза 0: Контур и исследование
 
-1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
+1. **Извлечь неизвестные из Технического контекста** выше:
+   - Для каждого ТРЕБУЕТ УТОЧНЕНИЯ → задача исследования
+   - Для каждой зависимости → задача лучших практик
+   - Для каждой интеграции → задача шаблонов
 
-2. **Generate and dispatch research agents**:
+2. **Сгенерировать и отправить агентов исследования**:
 
    ```text
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
+   Для каждого неизвестного в Техническом контексте:
+     Задача: "Исследовать {unknown} для {контекст фичи}"
+   Для каждого выбора технологии:
+     Задача: "Найти лучшие практики для {tech} в {домен}"
    ```
 
-3. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
-   - Rationale: [why chosen]
-   - Alternatives considered: [what else evaluated]
+3. **Консолидировать находки** в `research.md`, используя формат:
+   - Решение: [что было выбрано]
+   - Обоснование: [почему выбрано]
+   - Рассмотренные альтернативы: [что ещё оценивалось]
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+**Вывод**: research.md со всеми разрешёнными ТРЕБУЕТ УТОЧНЕНИЯ
 
-### Phase 1: Design & Contracts
+### Фаза 1: Проектирование и контракты
 
-**Prerequisites:** `research.md` complete
+**Предварительные требования:** `research.md` завершён
 
-1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
+1. **Извлечь сущности из спецификации фичи** → `data-model.md`:
+   - Название сущности, поля, связи
+   - Правила валидации из требований
+   - Переходы состояний при необходимости
 
-2. **Define interface contracts** (if project has external interfaces) → `/contracts/`:
-   - Identify what interfaces the project exposes to users or other systems
-   - Document the contract format appropriate for the project type
-   - Examples: public APIs for libraries, command schemas for CLI tools, endpoints for web services, grammars for parsers, UI contracts for applications
-   - Skip if project is purely internal (build scripts, one-off tools, etc.)
+2. **Определить контракты интерфейса** (если проект имеет внешние интерфейсы) → `/contracts/`:
+   - Определить, какие интерфейсы проект предоставляет пользователям или другим системам
+   - Задокументировать формат контракта, подходящий для типа проекта
+   - Примеры: публичные API для библиотек, схемы команд для CLI-инструментов, эндпоинты для веб-сервисов, грамматики для парсеров, UI-контракты для приложений
+   - Пропустить, если проект полностью внутренний (скрипты сборки, одноразовые инструменты и т.д.)
 
-3. **Agent context update**:
-   - Run `{AGENT_SCRIPT}`
-   - These scripts detect which AI agent is in use
-   - Update the appropriate agent-specific context file
-   - Add only new technology from current plan
-   - Preserve manual additions between markers
+3. **Обновление контекста агента**:
+   - Запустить `{AGENT_SCRIPT}`
+   - Эти скрипты определяют, какой AI-агент используется
+   - Обновить соответствующий агент-специфичный файл контекста
+   - Добавлять только новые технологии из текущего плана
+   - Сохранять ручные дополнения между маркерами
 
-**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
+**Вывод**: data-model.md, /contracts/*, quickstart.md, агент-специфичный файл
 
-## Key rules
+## Ключевые правила
 
-- Use absolute paths
-- ERROR on gate failures or unresolved clarifications
+- Использовать абсолютные пути
+- ОШИБКА при сбоях шлюзов или неразрешённых уточнениях

@@ -1,33 +1,33 @@
 ---
-description: Convert existing tasks into actionable, dependency-ordered GitHub issues for the feature based on available design artifacts.
+description: Преобразовать существующие задачи в actionable GitHub Issues с упорядоченными зависимостями для фичи на основе доступных проектных артефактов.
 tools: ['github/github-mcp-server/issue_write']
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
   ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
 ---
 
-## User Input
+## Ввод пользователя
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Вы **ОБЯЗАНЫ** учесть ввод пользователя перед продолжением (если он не пустой).
 
-## Outline
+## Краткое содержание
 
-1. Run `{SCRIPT}` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
-1. From the executed script, extract the path to **tasks**.
-1. Get the Git remote by running:
+1. Запустить `{SCRIPT}` из корня репозитория и разобрать FEATURE_DIR и список AVAILABLE_DOCS. Все пути должны быть абсолютными. Для одинарных кавычек в аргументах, например "I'm Groot", использовать синтаксис экранирования: 'I'\''m Groot' (или двойные кавычки, если возможно: "I'm Groot").
+1. Из выполненного скрипта извлечь путь к **tasks**.
+1. Получить удалённый Git, выполнив:
 
 ```bash
 git config --get remote.origin.url
 ```
 
 > [!CAUTION]
-> ONLY PROCEED TO NEXT STEPS IF THE REMOTE IS A GITHUB URL
+> ПРОДОЛЖАТЬ СЛЕДУЮЩИЕ ШАГИ ТОЛЬКО ЕСЛИ УДАЛЁННЫЙ — GITHUB URL
 
-1. For each task in the list, use the GitHub MCP server to create a new issue in the repository that is representative of the Git remote.
+1. Для каждой задачи в списке использовать GitHub MCP сервер для создания нового issue в репозитории, соответствующем удалённому Git.
 
 > [!CAUTION]
-> UNDER NO CIRCUMSTANCES EVER CREATE ISSUES IN REPOSITORIES THAT DO NOT MATCH THE REMOTE URL
+> НИ ПРИ КАКИХ ОБСТОЯТЕЛЬСТВАХ НЕ СОЗДАВАТЬ ISSUES В РЕПОЗИТОРИЯХ, НЕ СООТВЕТСТВУЮЩИХ URL УДАЛЁННОГО

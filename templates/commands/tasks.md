@@ -1,203 +1,203 @@
 ---
-description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
-handoffs: 
-  - label: Analyze For Consistency
+description: Сгенерировать actionable tasks.md с упорядоченными зависимостями для фичи на основе доступных проектных артефактов.
+handoffs:
+  - label: Анализ на согласованность
     agent: speckit.analyze
-    prompt: Run a project analysis for consistency
+    prompt: Запусти анализ проекта на согласованность
     send: true
-  - label: Implement Project
+  - label: Реализовать проект
     agent: speckit.implement
-    prompt: Start the implementation in phases
+    prompt: Начни реализацию по фазам
     send: true
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json
   ps: scripts/powershell/check-prerequisites.ps1 -Json
 ---
 
-## User Input
+## Ввод пользователя
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Вы **ОБЯЗАНЫ** учесть ввод пользователя перед продолжением (если он не пустой).
 
-## Pre-Execution Checks
+## Предварительные проверки
 
-**Check for extension hooks (before tasks generation)**:
-- Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_tasks` key
-- If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+**Проверка хуков расширений (перед генерацией задач)**:
+- Проверить, существует ли `.specify/extensions.yml` в корне проекта.
+- Если существует, прочитать и найти записи в ключе `hooks.before_tasks`
+- Если YAML не удаётся разобрать или он невалиден, пропустить проверку хуков и продолжать нормально
+- Отфильтровать хуки, у которых `enabled` явно равно `false`. Считать хуки без поля `enabled` включёнными по умолчанию.
+- Для каждого оставшегося хука **не пытаться** интерпретировать или оценивать выражения `condition` хука:
+  - Если у хука нет поля `condition`, или оно null/пустое, считать хук выполняемым
+  - Если хук определяет непустое `condition`, пропустить хук и оставить оценку условия реализации HookExecutor
+- Для каждого выполняемого хука вывести следующее в зависимости от флага `optional`:
+  - **Опциональный хук** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Хуки расширений
 
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Опциональный предварительный хук**: {extension}
+    Команда: `/{command}`
+    Описание: {description}
 
-    Prompt: {prompt}
-    To execute: `/{command}`
+    Запрос: {prompt}
+    Для выполнения: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Обязательный хук** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Хуки расширений
 
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
+    **Автоматический предварительный хук**: {extension}
+    Выполняется: `/{command}`
     EXECUTE_COMMAND: {command}
-    
-    Wait for the result of the hook command before proceeding to the Outline.
+
+    Дождаться результата команды хука перед переходом к Краткому содержанию.
     ```
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+- Если хуки не зарегистрированы или `.specify/extensions.yml` не существует, пропустить без вывода
 
-## Outline
+## Краткое содержание
 
-1. **Setup**: Run `{SCRIPT}` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. **Настройка**: Запустить `{SCRIPT}` из корня репозитория и разобрать FEATURE_DIR и список AVAILABLE_DOCS. Все пути должны быть абсолютными. Для одинарных кавычек в аргументах, например "I'm Groot", использовать синтаксис экранирования: 'I'\''m Groot' (или двойные кавычки, если возможно: "I'm Groot").
 
-2. **Load design documents**: Read from FEATURE_DIR:
-   - **Required**: plan.md (tech stack, libraries, structure), spec.md (user stories with priorities)
-   - **Optional**: data-model.md (entities), contracts/ (interface contracts), research.md (decisions), quickstart.md (test scenarios)
-   - Note: Not all projects have all documents. Generate tasks based on what's available.
+2. **Загрузить проектные документы**: Читать из FEATURE_DIR:
+   - **Обязательно**: plan.md (технологический стек, библиотеки, структура), spec.md (пользовательские истории с приоритетами)
+   - **Опционально**: data-model.md (сущности), contracts/ (контракты интерфейса), research.md (решения), quickstart.md (тестовые сценарии)
+   - Примечание: Не все проекты имеют все документы. Генерировать задачи на основе доступных.
 
-3. **Execute task generation workflow**:
-   - Load plan.md and extract tech stack, libraries, project structure
-   - Load spec.md and extract user stories with their priorities (P1, P2, P3, etc.)
-   - If data-model.md exists: Extract entities and map to user stories
-   - If contracts/ exists: Map interface contracts to user stories
-   - If research.md exists: Extract decisions for setup tasks
-   - Generate tasks organized by user story (see Task Generation Rules below)
-   - Generate dependency graph showing user story completion order
-   - Create parallel execution examples per user story
-   - Validate task completeness (each user story has all needed tasks, independently testable)
+3. **Выполнить рабочий процесс генерации задач**:
+   - Загрузить plan.md и извлечь технологический стек, библиотеки, структуру проекта
+   - Загрузить spec.md и извлечь пользовательские истории с их приоритетами (P1, P2, P3 и т.д.)
+   - Если data-model.md существует: Извлечь сущности и сопоставить с пользовательскими историями
+   - Если contracts/ существует: Сопоставить контракты интерфейса с пользовательскими историями
+   - Если research.md существует: Извлечь решения для задач настройки
+   - Сгенерировать задачи, организованные по пользовательским историям (см. Правила генерации задач ниже)
+   - Сгенерировать граф зависимостей, показывающий порядок завершения пользовательских историй
+   - Создать примеры параллельного выполнения для каждой пользовательской истории
+   - Проверить полноту задач (каждая пользовательская история имеет все необходимые задачи, независимо тестируемые)
 
-4. **Generate tasks.md**: Use `templates/tasks-template.md` as structure, fill with:
-   - Correct feature name from plan.md
-   - Phase 1: Setup tasks (project initialization)
-   - Phase 2: Foundational tasks (blocking prerequisites for all user stories)
-   - Phase 3+: One phase per user story (in priority order from spec.md)
-   - Each phase includes: story goal, independent test criteria, tests (if requested), implementation tasks
-   - Final Phase: Polish & cross-cutting concerns
-   - All tasks must follow the strict checklist format (see Task Generation Rules below)
-   - Clear file paths for each task
-   - Dependencies section showing story completion order
-   - Parallel execution examples per story
-   - Implementation strategy section (MVP first, incremental delivery)
+4. **Сгенерировать tasks.md**: Использовать `templates/tasks-template.md` как структуру, заполнить:
+   - Правильное имя фичи из plan.md
+   - Фаза 1: Задачи настройки (инициализация проекта)
+   - Фаза 2: Фундаментальные задачи (блокирующие предварительные требования для всех пользовательских историй)
+   - Фаза 3+: По одной фазе на пользовательскую историю (в порядке приоритета из spec.md)
+   - Каждая фаза включает: цель истории, критерии независимого тестирования, тесты (если запрошены), задачи реализации
+   - Финальная фаза: Полировка и сквозные задачи
+   - Все задачи должны следовать строгому формату чеклиста (см. Правила генерации задач ниже)
+   - Чёткие пути к файлам для каждой задачи
+   - Секция зависимостей, показывающая порядок завершения историй
+   - Примеры параллельного выполнения для каждой истории
+   - Секция стратегии реализации (сначала MVP, инкрементальная поставка)
 
-5. **Report**: Output path to generated tasks.md and summary:
-   - Total task count
-   - Task count per user story
-   - Parallel opportunities identified
-   - Independent test criteria for each story
-   - Suggested MVP scope (typically just User Story 1)
-   - Format validation: Confirm ALL tasks follow the checklist format (checkbox, ID, labels, file paths)
+5. **Отчёт**: Вывести путь к сгенерированному tasks.md и сводку:
+   - Общее количество задач
+   - Количество задач на пользовательскую историю
+   - Выявленные возможности параллельного выполнения
+   - Критерии независимого тестирования для каждой истории
+   - Предлагаемый охват MVP (обычно только Пользовательская история 1)
+   - Валидация формата: Подтвердить, что ВСЕ задачи следуют формату чеклиста (флажок, ID, метки, пути к файлам)
 
-6. **Check for extension hooks**: After tasks.md is generated, check if `.specify/extensions.yml` exists in the project root.
-   - If it exists, read it and look for entries under the `hooks.after_tasks` key
-   - If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
-   - Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-   - For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-     - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-     - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-   - For each executable hook, output the following based on its `optional` flag:
-     - **Optional hook** (`optional: true`):
+6. **Проверка хуков расширений**: После генерации tasks.md проверить, существует ли `.specify/extensions.yml` в корне проекта.
+   - Если существует, прочитать и найти записи в ключе `hooks.after_tasks`
+   - Если YAML не удаётся разобрать или он невалиден, пропустить проверку хуков и продолжать нормально
+   - Отфильтровать хуки, у которых `enabled` явно равно `false`. Считать хуки без поля `enabled` включёнными по умолчанию.
+   - Для каждого оставшегося хука **не пытаться** интерпретировать или оценивать выражения `condition` хука:
+     - Если у хука нет поля `condition`, или оно null/пустое, считать хук выполняемым
+     - Если хук определяет непустое `condition`, пропустить хук и оставить оценку условия реализации HookExecutor
+   - Для каждого выполняемого хука вывести следующее в зависимости от флага `optional`:
+     - **Опциональный хук** (`optional: true`):
        ```
-       ## Extension Hooks
+       ## Хуки расширений
 
-       **Optional Hook**: {extension}
-       Command: `/{command}`
-       Description: {description}
+       **Опциональный хук**: {extension}
+       Команда: `/{command}`
+       Описание: {description}
 
-       Prompt: {prompt}
-       To execute: `/{command}`
+       Запрос: {prompt}
+       Для выполнения: `/{command}`
        ```
-     - **Mandatory hook** (`optional: false`):
+     - **Обязательный хук** (`optional: false`):
        ```
-       ## Extension Hooks
+       ## Хуки расширений
 
-       **Automatic Hook**: {extension}
-       Executing: `/{command}`
+       **Автоматический хук**: {extension}
+       Выполняется: `/{command}`
        EXECUTE_COMMAND: {command}
        ```
-   - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+   - Если хуки не зарегистрированы или `.specify/extensions.yml` не существует, пропустить без вывода
 
-Context for task generation: {ARGS}
+Контекст для генерации задач: {ARGS}
 
-The tasks.md should be immediately executable - each task must be specific enough that an LLM can complete it without additional context.
+tasks.md должен быть немедленно выполняемым — каждая задача должна быть достаточно конкретной, чтобы LLM мог её выполнить без дополнительного контекста.
 
-## Task Generation Rules
+## Правила генерации задач
 
-**CRITICAL**: Tasks MUST be organized by user story to enable independent implementation and testing.
+**КРИТИЧНО**: Задачи ДОЛЖНЫ быть организованы по пользовательским историям для обеспечения независимой реализации и тестирования.
 
-**Tests are OPTIONAL**: Only generate test tasks if explicitly requested in the feature specification or if user requests TDD approach.
+**Тесты ОПЦИОНАЛЬНЫ**: Генерировать тестовые задачи только если явно запрошено в спецификации фичи или пользователь запрашивает подход TDD.
 
-### Checklist Format (REQUIRED)
+### Формат чеклиста (ОБЯЗАТЕЛЬНО)
 
-Every task MUST strictly follow this format:
+Каждая задача ДОЛЖНА строго следовать этому формату:
 
 ```text
-- [ ] [TaskID] [P?] [Story?] Description with file path
+- [ ] [TaskID] [P?] [Story?] Описание с путём к файлу
 ```
 
-**Format Components**:
+**Компоненты формата**:
 
-1. **Checkbox**: ALWAYS start with `- [ ]` (markdown checkbox)
-2. **Task ID**: Sequential number (T001, T002, T003...) in execution order
-3. **[P] marker**: Include ONLY if task is parallelizable (different files, no dependencies on incomplete tasks)
-4. **[Story] label**: REQUIRED for user story phase tasks only
-   - Format: [US1], [US2], [US3], etc. (maps to user stories from spec.md)
-   - Setup phase: NO story label
-   - Foundational phase: NO story label  
-   - User Story phases: MUST have story label
-   - Polish phase: NO story label
-5. **Description**: Clear action with exact file path
+1. **Флажок**: ВСЕГДА начинать с `- [ ]` (флажок Markdown)
+2. **ID задачи**: Последовательный номер (T001, T002, T003...) в порядке выполнения
+3. **Маркер [P]**: Включать ТОЛЬКО если задача параллелизируема (разные файлы, нет зависимостей от незавершённых задач)
+4. **Метка [Story]**: ОБЯЗАТЕЛЬНА только для задач фазы пользовательской истории
+   - Формат: [US1], [US2], [US3] и т.д. (соответствует пользовательским историям из spec.md)
+   - Фаза настройки: БЕЗ метки истории
+   - Фундаментальная фаза: БЕЗ метки истории
+   - Фазы пользовательских историй: ОБЯЗАТЕЛЬНО иметь метку истории
+   - Фаза полировки: БЕЗ метки истории
+5. **Описание**: Чёткое действие с точным путём к файлу
 
-**Examples**:
+**Примеры**:
 
-- ✅ CORRECT: `- [ ] T001 Create project structure per implementation plan`
-- ✅ CORRECT: `- [ ] T005 [P] Implement authentication middleware in src/middleware/auth.py`
-- ✅ CORRECT: `- [ ] T012 [P] [US1] Create User model in src/models/user.py`
-- ✅ CORRECT: `- [ ] T014 [US1] Implement UserService in src/services/user_service.py`
-- ❌ WRONG: `- [ ] Create User model` (missing ID and Story label)
-- ❌ WRONG: `T001 [US1] Create model` (missing checkbox)
-- ❌ WRONG: `- [ ] [US1] Create User model` (missing Task ID)
-- ❌ WRONG: `- [ ] T001 [US1] Create model` (missing file path)
+- ✅ ВЕРНО: `- [ ] T001 Создать структуру проекта согласно плану реализации`
+- ✅ ВЕРНО: `- [ ] T005 [P] Реализовать middleware аутентификации в src/middleware/auth.py`
+- ✅ ВЕРНО: `- [ ] T012 [P] [US1] Создать модель User в src/models/user.py`
+- ✅ ВЕРНО: `- [ ] T014 [US1] Реализовать UserService в src/services/user_service.py`
+- ❌ НЕВЕРНО: `- [ ] Создать модель User` (отсутствует ID и метка истории)
+- ❌ НЕВЕРНО: `T001 [US1] Создать модель` (отсутствует флажок)
+- ❌ НЕВЕРНО: `- [ ] [US1] Создать модель User` (отсутствует ID задачи)
+- ❌ НЕВЕРНО: `- [ ] T001 [US1] Создать модель` (отсутствует путь к файлу)
 
-### Task Organization
+### Организация задач
 
-1. **From User Stories (spec.md)** - PRIMARY ORGANIZATION:
-   - Each user story (P1, P2, P3...) gets its own phase
-   - Map all related components to their story:
-     - Models needed for that story
-     - Services needed for that story
-     - Interfaces/UI needed for that story
-     - If tests requested: Tests specific to that story
-   - Mark story dependencies (most stories should be independent)
+1. **Из пользовательских историй (spec.md)** — ОСНОВНАЯ ОРГАНИЗАЦИЯ:
+   - Каждая пользовательская история (P1, P2, P3...) получает свою фазу
+   - Сопоставить все связанные компоненты с их историей:
+     - Модели, необходимые для этой истории
+     - Сервисы, необходимые для этой истории
+     - Интерфейсы/UI, необходимые для этой истории
+     - Если тесты запрошены: Тесты, специфичные для этой истории
+   - Помечать зависимости историй (большинство историй должны быть независимыми)
 
-2. **From Contracts**:
-   - Map each interface contract → to the user story it serves
-   - If tests requested: Each interface contract → contract test task [P] before implementation in that story's phase
+2. **Из контрактов**:
+   - Сопоставить каждый контракт интерфейса → с пользовательской историей, которой он служит
+   - Если тесты запрошены: Каждый контракт интерфейса → задача контрактного теста [P] перед реализацией в фазе этой истории
 
-3. **From Data Model**:
-   - Map each entity to the user story(ies) that need it
-   - If entity serves multiple stories: Put in earliest story or Setup phase
-   - Relationships → service layer tasks in appropriate story phase
+3. **Из модели данных**:
+   - Сопоставить каждую сущность с пользовательской историей (историями), которым она нужна
+   - Если сущность служит нескольким историям: Поместить в наиболее раннюю историю или фазу настройки
+   - Связи → задачи сервисного слоя в соответствующей фазе истории
 
-4. **From Setup/Infrastructure**:
-   - Shared infrastructure → Setup phase (Phase 1)
-   - Foundational/blocking tasks → Foundational phase (Phase 2)
-   - Story-specific setup → within that story's phase
+4. **Из настройки/инфраструктуры**:
+   - Общая инфраструктура → Фаза настройки (Фаза 1)
+   - Фундаментальные/блокирующие задачи → Фундаментальная фаза (Фаза 2)
+   - Специфичная для истории настройка → внутри фазы этой истории
 
-### Phase Structure
+### Структура фаз
 
-- **Phase 1**: Setup (project initialization)
-- **Phase 2**: Foundational (blocking prerequisites - MUST complete before user stories)
-- **Phase 3+**: User Stories in priority order (P1, P2, P3...)
-  - Within each story: Tests (if requested) → Models → Services → Endpoints → Integration
-  - Each phase should be a complete, independently testable increment
-- **Final Phase**: Polish & Cross-Cutting Concerns
+- **Фаза 1**: Настройка (инициализация проекта)
+- **Фаза 2**: Фундаментальная (блокирующие предварительные требования — ДОЛЖНЫ завершиться до пользовательских историй)
+- **Фаза 3+**: Пользовательские истории в порядке приоритета (P1, P2, P3...)
+  - Внутри каждой истории: Тесты (если запрошены) → Модели → Сервисы → Эндпоинты → Интеграция
+  - Каждая фаза должна быть полным, независимо тестируемым инкрементом
+- **Финальная фаза**: Полировка и сквозные задачи

@@ -1,117 +1,117 @@
 ---
-description: Execute the implementation plan by processing and executing all tasks defined in tasks.md
+description: Выполнить план реализации, обработав и выполнив все задачи, определённые в tasks.md.
 scripts:
   sh: scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
   ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks
 ---
 
-## User Input
+## Ввод пользователя
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+Вы **ОБЯЗАНЫ** учесть ввод пользователя перед продолжением (если он не пустой).
 
-## Pre-Execution Checks
+## Предварительные проверки
 
-**Check for extension hooks (before implementation)**:
-- Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_implement` key
-- If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+**Проверка хуков расширений (перед реализацией)**:
+- Проверить, существует ли `.specify/extensions.yml` в корне проекта.
+- Если существует, прочитать и найти записи в ключе `hooks.before_implement`
+- Если YAML не удаётся разобрать или он невалиден, пропустить проверку хуков и продолжать нормально
+- Отфильтровать хуки, у которых `enabled` явно равно `false`. Считать хуки без поля `enabled` включёнными по умолчанию.
+- Для каждого оставшегося хука **не пытаться** интерпретировать или оценивать выражения `condition` хука:
+  - Если у хука нет поля `condition`, или оно null/пустое, считать хук выполняемым
+  - Если хук определяет непустое `condition`, пропустить хук и оставить оценку условия реализации HookExecutor
+- Для каждого выполняемого хука вывести следующее в зависимости от флага `optional`:
+  - **Опциональный хук** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Хуки расширений
 
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Опциональный предварительный хук**: {extension}
+    Команда: `/{command}`
+    Описание: {description}
 
-    Prompt: {prompt}
-    To execute: `/{command}`
+    Запрос: {prompt}
+    Для выполнения: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Обязательный хук** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Хуки расширений
 
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
+    **Автоматический предварительный хук**: {extension}
+    Выполняется: `/{command}`
     EXECUTE_COMMAND: {command}
-    
-    Wait for the result of the hook command before proceeding to the Outline.
+
+    Дождаться результата команды хука перед переходом к Краткому содержанию.
     ```
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+- Если хуки не зарегистрированы или `.specify/extensions.yml` не существует, пропустить без вывода
 
-## Outline
+## Краткое содержание
 
-1. Run `{SCRIPT}` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. Запустить `{SCRIPT}` из корня репозитория и разобрать FEATURE_DIR и список AVAILABLE_DOCS. Все пути должны быть абсолютными. Для одинарных кавычек в аргументах, например "I'm Groot", использовать синтаксис экранирования: 'I'\''m Groot' (или двойные кавычки, если возможно: "I'm Groot").
 
-2. **Check checklists status** (if FEATURE_DIR/checklists/ exists):
-   - Scan all checklist files in the checklists/ directory
-   - For each checklist, count:
-     - Total items: All lines matching `- [ ]` or `- [X]` or `- [x]`
-     - Completed items: Lines matching `- [X]` or `- [x]`
-     - Incomplete items: Lines matching `- [ ]`
-   - Create a status table:
+2. **Проверка статуса чеклистов** (если FEATURE_DIR/checklists/ существует):
+   - Просканировать все файлы чеклистов в каталоге checklists/
+   - Для каждого чеклиста подсчитать:
+     - Всего пунктов: Все строки, соответствующие `- [ ]` или `- [X]` или `- [x]`
+     - Завершённые пункты: Строки, соответствующие `- [X]` или `- [x]`
+     - Незавершённые пункты: Строки, соответствующие `- [ ]`
+   - Создать таблицу статуса:
 
      ```text
-     | Checklist | Total | Completed | Incomplete | Status |
-     |-----------|-------|-----------|------------|--------|
-     | ux.md     | 12    | 12        | 0          | ✓ PASS |
-     | test.md   | 8     | 5         | 3          | ✗ FAIL |
-     | security.md | 6   | 6         | 0          | ✓ PASS |
+     | Чеклист     | Всего | Завершено | Не завершено | Статус  |
+     |-------------|-------|-----------|--------------|---------|
+     | ux.md       | 12    | 12        | 0            | ✓ OK    |
+     | test.md     | 8     | 5         | 3            | ✗ FAIL  |
+     | security.md | 6     | 6         | 0            | ✓ OK    |
      ```
 
-   - Calculate overall status:
-     - **PASS**: All checklists have 0 incomplete items
-     - **FAIL**: One or more checklists have incomplete items
+   - Вычислить общий статус:
+     - **PASS**: Все чеклисты имеют 0 незавершённых пунктов
+     - **FAIL**: Один или более чеклистов имеют незавершённые пункты
 
-   - **If any checklist is incomplete**:
-     - Display the table with incomplete item counts
-     - **STOP** and ask: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
-     - Wait for user response before continuing
-     - If user says "no" or "wait" or "stop", halt execution
-     - If user says "yes" or "proceed" or "continue", proceed to step 3
+   - **Если какой-либо чеклист не завершён**:
+     - Отобразить таблицу с количеством незавершённых пунктов
+     - **ОСТАНОВИТЬСЯ** и спросить: «Некоторые чеклисты не завершены. Хотите продолжить реализацию? (да/нет)»
+     - Дождаться ответа пользователя перед продолжением
+     - Если пользователь отвечает «нет» или «подождите» или «стоп» — прекратить выполнение
+     - Если пользователь отвечает «да» или «продолжай» — перейти к шагу 3
 
-   - **If all checklists are complete**:
-     - Display the table showing all checklists passed
-     - Automatically proceed to step 3
+   - **Если все чеклисты завершены**:
+     - Отобразить таблицу, показывающую, что все чеклисты прошли
+     - Автоматически перейти к шагу 3
 
-3. Load and analyze the implementation context:
-   - **REQUIRED**: Read tasks.md for the complete task list and execution plan
-   - **REQUIRED**: Read plan.md for tech stack, architecture, and file structure
-   - **IF EXISTS**: Read data-model.md for entities and relationships
-   - **IF EXISTS**: Read contracts/ for API specifications and test requirements
-   - **IF EXISTS**: Read research.md for technical decisions and constraints
-   - **IF EXISTS**: Read quickstart.md for integration scenarios
+3. Загрузить и проанализировать контекст реализации:
+   - **ОБЯЗАТЕЛЬНО**: Прочитать tasks.md для полного списка задач и плана выполнения
+   - **ОБЯЗАТЕЛЬНО**: Прочитать plan.md для технологического стека, архитектуры и структуры файлов
+   - **ЕСЛИ СУЩЕСТВУЕТ**: Прочитать data-model.md для сущностей и связей
+   - **ЕСЛИ СУЩЕСТВУЕТ**: Прочитать contracts/ для API-спецификаций и требований к тестам
+   - **ЕСЛИ СУЩЕСТВУЕТ**: Прочитать research.md для технических решений и ограничений
+   - **ЕСЛИ СУЩЕСТВУЕТ**: Прочитать quickstart.md для сценариев интеграции
 
-4. **Project Setup Verification**:
-   - **REQUIRED**: Create/verify ignore files based on actual project setup:
+4. **Верификация настройки проекта**:
+   - **ОБЯЗАТЕЛЬНО**: Создать/проверить файлы игнорирования на основе реальной настройки проекта:
 
-   **Detection & Creation Logic**:
-   - Check if the following command succeeds to determine if the repository is a git repo (create/verify .gitignore if so):
+   **Логика обнаружения и создания**:
+   - Проверить, успешна ли следующая команда для определения, является ли репозиторий git-репозиторием (создать/проверить .gitignore если да):
 
      ```sh
      git rev-parse --git-dir 2>/dev/null
      ```
 
-   - Check if Dockerfile* exists or Docker in plan.md → create/verify .dockerignore
-   - Check if .eslintrc* exists → create/verify .eslintignore
-   - Check if eslint.config.* exists → ensure the config's `ignores` entries cover required patterns
-   - Check if .prettierrc* exists → create/verify .prettierignore
-   - Check if .npmrc or package.json exists → create/verify .npmignore (if publishing)
-   - Check if terraform files (*.tf) exist → create/verify .terraformignore
-   - Check if .helmignore needed (helm charts present) → create/verify .helmignore
+   - Проверить, существуют ли Dockerfile* или Docker в plan.md → создать/проверить .dockerignore
+   - Проверить, существует ли .eslintrc* → создать/проверить .eslintignore
+   - Проверить, существует ли eslint.config.* → убедиться, что записи `ignores` в конфиге охватывают обязательные шаблоны
+   - Проверить, существует ли .prettierrc* → создать/проверить .prettierignore
+   - Проверить, существуют ли .npmrc или package.json → создать/проверить .npmignore (при публикации)
+   - Проверить, существуют ли файлы terraform (*.tf) → создать/проверить .terraformignore
+   - Проверить, нужен ли .helmignore (присутствуют helm charts) → создать/проверить .helmignore
 
-   **If ignore file already exists**: Verify it contains essential patterns, append missing critical patterns only
-   **If ignore file missing**: Create with full pattern set for detected technology
+   **Если файл игнорирования уже существует**: Проверить наличие обязательных шаблонов, добавить только отсутствующие критические шаблоны
+   **Если файл игнорирования отсутствует**: Создать с полным набором шаблонов для обнаруженной технологии
 
-   **Common Patterns by Technology** (from plan.md tech stack):
+   **Типичные шаблоны по технологиям** (из технологического стека plan.md):
    - **Node.js/JavaScript/TypeScript**: `node_modules/`, `dist/`, `build/`, `*.log`, `.env*`
    - **Python**: `__pycache__/`, `*.pyc`, `.venv/`, `venv/`, `dist/`, `*.egg-info/`
    - **Java**: `target/`, `*.class`, `*.jar`, `.gradle/`, `build/`
@@ -125,77 +125,77 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **C**: `build/`, `bin/`, `obj/`, `out/`, `*.o`, `*.a`, `*.so`, `*.exe`, `*.dll`, `autom4te.cache/`, `config.status`, `config.log`, `.idea/`, `*.log`, `.env*`
    - **Swift**: `.build/`, `DerivedData/`, `*.swiftpm/`, `Packages/`
    - **R**: `.Rproj.user/`, `.Rhistory`, `.RData`, `.Ruserdata`, `*.Rproj`, `packrat/`, `renv/`
-   - **Universal**: `.DS_Store`, `Thumbs.db`, `*.tmp`, `*.swp`, `.vscode/`, `.idea/`
+   - **Универсальные**: `.DS_Store`, `Thumbs.db`, `*.tmp`, `*.swp`, `.vscode/`, `.idea/`
 
-   **Tool-Specific Patterns**:
+   **Шаблоны для конкретных инструментов**:
    - **Docker**: `node_modules/`, `.git/`, `Dockerfile*`, `.dockerignore`, `*.log*`, `.env*`, `coverage/`
    - **ESLint**: `node_modules/`, `dist/`, `build/`, `coverage/`, `*.min.js`
    - **Prettier**: `node_modules/`, `dist/`, `build/`, `coverage/`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`
    - **Terraform**: `.terraform/`, `*.tfstate*`, `*.tfvars`, `.terraform.lock.hcl`
    - **Kubernetes/k8s**: `*.secret.yaml`, `secrets/`, `.kube/`, `kubeconfig*`, `*.key`, `*.crt`
 
-5. Parse tasks.md structure and extract:
-   - **Task phases**: Setup, Tests, Core, Integration, Polish
-   - **Task dependencies**: Sequential vs parallel execution rules
-   - **Task details**: ID, description, file paths, parallel markers [P]
-   - **Execution flow**: Order and dependency requirements
+5. Разобрать структуру tasks.md и извлечь:
+   - **Фазы задач**: Настройка, Тесты, Ядро, Интеграция, Полировка
+   - **Зависимости задач**: Правила последовательного и параллельного выполнения
+   - **Детали задач**: ID, описание, пути к файлам, маркеры параллельного выполнения [P]
+   - **Поток выполнения**: Порядок и требования к зависимостям
 
-6. Execute implementation following the task plan:
-   - **Phase-by-phase execution**: Complete each phase before moving to the next
-   - **Respect dependencies**: Run sequential tasks in order, parallel tasks [P] can run together  
-   - **Follow TDD approach**: Execute test tasks before their corresponding implementation tasks
-   - **File-based coordination**: Tasks affecting the same files must run sequentially
-   - **Validation checkpoints**: Verify each phase completion before proceeding
+6. Выполнить реализацию, следуя плану задач:
+   - **Выполнение фаза за фазой**: Завершить каждую фазу перед переходом к следующей
+   - **Соблюдать зависимости**: Выполнять последовательные задачи по порядку, параллельные задачи [P] можно выполнять вместе
+   - **Следовать подходу TDD**: Выполнять тестовые задачи до соответствующих задач реализации
+   - **Координация на основе файлов**: Задачи, затрагивающие одни и те же файлы, должны выполняться последовательно
+   - **Контрольные точки валидации**: Проверять завершение каждой фазы перед продолжением
 
-7. Implementation execution rules:
-   - **Setup first**: Initialize project structure, dependencies, configuration
-   - **Tests before code**: If you need to write tests for contracts, entities, and integration scenarios
-   - **Core development**: Implement models, services, CLI commands, endpoints
-   - **Integration work**: Database connections, middleware, logging, external services
-   - **Polish and validation**: Unit tests, performance optimization, documentation
+7. Правила выполнения реализации:
+   - **Сначала настройка**: Инициализировать структуру проекта, зависимости, конфигурацию
+   - **Тесты до кода**: Если нужно написать тесты для контрактов, сущностей и интеграционных сценариев
+   - **Основная разработка**: Реализовать модели, сервисы, CLI-команды, эндпоинты
+   - **Интеграционная работа**: Подключения к базам данных, middleware, логирование, внешние сервисы
+   - **Полировка и валидация**: Юнит-тесты, оптимизация производительности, документация
 
-8. Progress tracking and error handling:
-   - Report progress after each completed task
-   - Halt execution if any non-parallel task fails
-   - For parallel tasks [P], continue with successful tasks, report failed ones
-   - Provide clear error messages with context for debugging
-   - Suggest next steps if implementation cannot proceed
-   - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
+8. Отслеживание прогресса и обработка ошибок:
+   - Сообщать о прогрессе после каждой завершённой задачи
+   - Прекращать выполнение при сбое любой непараллельной задачи
+   - Для параллельных задач [P]: продолжать с успешными задачами, сообщать о неудавшихся
+   - Предоставлять чёткие сообщения об ошибках с контекстом для отладки
+   - Предлагать следующие шаги, если реализация не может продолжаться
+   - **ВАЖНО**: После завершения задач отмечать их как [X] в файле задач.
 
-9. Completion validation:
-   - Verify all required tasks are completed
-   - Check that implemented features match the original specification
-   - Validate that tests pass and coverage meets requirements
-   - Confirm the implementation follows the technical plan
-   - Report final status with summary of completed work
+9. Валидация завершения:
+   - Проверить, что все обязательные задачи завершены
+   - Убедиться, что реализованные фичи соответствуют исходной спецификации
+   - Проверить, что тесты проходят и покрытие соответствует требованиям
+   - Подтвердить, что реализация следует техническому плану
+   - Сообщить финальный статус со сводкой выполненной работы
 
-Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit.tasks` first to regenerate the task list.
+Примечание: Эта команда предполагает наличие полной разбивки задач в tasks.md. Если задачи неполны или отсутствуют, предложить сначала запустить `/speckit.tasks` для регенерации списка задач.
 
-10. **Check for extension hooks**: After completion validation, check if `.specify/extensions.yml` exists in the project root.
-    - If it exists, read it and look for entries under the `hooks.after_implement` key
-    - If the YAML cannot be parsed or is invalid, skip hook checking silently and continue normally
-    - Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-    - For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-      - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-      - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-    - For each executable hook, output the following based on its `optional` flag:
-      - **Optional hook** (`optional: true`):
+10. **Проверка хуков расширений**: После валидации завершения проверить, существует ли `.specify/extensions.yml` в корне проекта.
+    - Если существует, прочитать и найти записи в ключе `hooks.after_implement`
+    - Если YAML не удаётся разобрать или он невалиден, пропустить проверку хуков и продолжать нормально
+    - Отфильтровать хуки, у которых `enabled` явно равно `false`. Считать хуки без поля `enabled` включёнными по умолчанию.
+    - Для каждого оставшегося хука **не пытаться** интерпретировать или оценивать выражения `condition` хука:
+      - Если у хука нет поля `condition`, или оно null/пустое, считать хук выполняемым
+      - Если хук определяет непустое `condition`, пропустить хук и оставить оценку условия реализации HookExecutor
+    - Для каждого выполняемого хука вывести следующее в зависимости от флага `optional`:
+      - **Опциональный хук** (`optional: true`):
         ```
-        ## Extension Hooks
+        ## Хуки расширений
 
-        **Optional Hook**: {extension}
-        Command: `/{command}`
-        Description: {description}
+        **Опциональный хук**: {extension}
+        Команда: `/{command}`
+        Описание: {description}
 
-        Prompt: {prompt}
-        To execute: `/{command}`
+        Запрос: {prompt}
+        Для выполнения: `/{command}`
         ```
-      - **Mandatory hook** (`optional: false`):
+      - **Обязательный хук** (`optional: false`):
         ```
-        ## Extension Hooks
+        ## Хуки расширений
 
-        **Automatic Hook**: {extension}
-        Executing: `/{command}`
+        **Автоматический хук**: {extension}
+        Выполняется: `/{command}`
         EXECUTE_COMMAND: {command}
         ```
-    - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+    - Если хуки не зарегистрированы или `.specify/extensions.yml` не существует, пропустить без вывода
