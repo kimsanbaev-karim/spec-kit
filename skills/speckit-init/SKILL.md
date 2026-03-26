@@ -50,7 +50,7 @@ uv tool install specify-cli --force --from git+https://github.com/github/spec-ki
 ### Шаг 3 — Проверка установки
 
 ```bash
-specify --version
+specify check
 ```
 
 Если `specify` не найден в PATH после установки, пользователю может потребоваться выполнить `uv tool update-shell` и перезапустить терминал.
